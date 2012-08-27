@@ -23,6 +23,14 @@ class Extension17:
             for i in ('x2','y2','z2'):
                 append += pack('short', packet.data[i])
         return append
+
+@extension(0x1D)
+class DestroyEntity:
+    @classmethod
+    def decode_extra(self, packet, bbuff):
+        count = int(packet.data['entity_count'])
+        for i in range(count):
+            eid = unpack(bbuff, "int")
     
 @extension(0x33)
 class Extension33:
@@ -66,17 +74,34 @@ class Extension34:
                 (block['x']    << 28))
         return append
 
-@extension(0x3C)
-class Extension3C:
+@extension(0x38)
+class MapChunkBulk:
     @classmethod
     def decode_extra(self, packet, bbuff):
-        records = unpack_array_fast(bbuff, 'byte', packet.data['data_size']*3)
+        chunk_data = unpack_array_fast(bbuff, 'byte', packet.data['data_len'])
+        for i in range(packet.data['chunk_count']):
+            # meta data! horray!
+            cx = unpack(bbuff, 'int')
+            cz = unpack(bbuff, 'int')
+            primary_bitmap = unpack(bbuff, 'short')
+            add_bitmap = unpack(bbuff, 'short')
+            
+        
+
+@extension(0x3C)
+class Explosion:
+    @classmethod
+    def decode_extra(self, packet, bbuff):
+        records = unpack_array_fast(bbuff, 'byte', packet.data['records']*3)
         i = 0
         packet.data["blocks"] = []
-        while i < packet.data['data_size']*3:
+        while i < packet.data['records']*3:
             packet.data["blocks"].append(dict(zip(('x','y','z'), records[i:i+3])))
             i+=3
-        del packet.data["data_size"]
+        # remove the 3 unknown floats
+        unpack(bbuff, "float")
+        unpack(bbuff, "float")
+        unpack(bbuff, "float")
     
     @classmethod
     def encode_extra(self, packet):
@@ -137,3 +162,12 @@ class ExtensionFA:
     def encode_extra(self, packet):
         packet.data['data_size'] = len(packet.data['data'])
         return pack_array_fast('byte', packet.data['data'])
+
+"""
+@extention(0xFD)
+class EncryptionKeyRequest:
+    @classmethod
+    def decode_extra(self, packet, bbuff):
+        l = unpack
+        packet.data["pubkey"] = unpack_array_fast(bbuff, 'byte', packet.data
+"""

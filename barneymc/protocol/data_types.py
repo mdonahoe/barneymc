@@ -101,10 +101,10 @@ def unpack(bbuff, data_type):
     if data_type == "slot":
         o = {}
         o["id"] = unpack(bbuff, 'short')
-        if o["id"] > 0:
+        if o["id"] > -1:
             o["amount"] = unpack(bbuff, 'byte')
             o["damage"] = unpack(bbuff, 'short')
-            if o['id'] in enchantable:
+            if o['id'] > -1:
                 length = unpack(bbuff, 'short')
                 if length > 0:
                     ench = bbuff.recv(length)
@@ -119,6 +119,7 @@ def unpack(bbuff, data_type):
         metadata = []
         x = unpack(bbuff, 'ubyte')
         while x != 127:
+            val = None
             key = x & 0x1F # Lower 5 bits
             ty  = x >> 5   # Upper 3 bits
             if ty == 0: val = unpack(bbuff, 'byte') 
@@ -135,8 +136,9 @@ def unpack(bbuff, data_type):
                 val = []
                 for i in range(3):
                     val.append(unpack(bbuff, 'int'))
+            assert val is not None, "unknown val:" + str(ty)
             metadata.append((key, (ty, val)))
-            x = unpack(bbuff, 'byte')
+            x = unpack(bbuff, 'ubyte')
         return metadata
                 
 def unpack_real(bbuff, data_type, length):

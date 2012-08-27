@@ -35,7 +35,7 @@ names = {
     0x11:    "Use bed",
     0x12:    "Animation",
     0x13:    "Entity action",
-    0x14:    "Named entity spawn",
+    0x14:    "Spawn Named entity",
     0x15:    "Pickup spawn",
     0x16:    "Collect item",
     0x17:    "Add object/vehicle",
@@ -61,8 +61,11 @@ names = {
     0x34:    "Multi-block change",
     0x35:    "Block change",
     0x36:    "Block action",
+    0x37:    "Block Break Animation",
+    0x38:    "Map Chunk Bulk",
     0x3C:    "Explosion",
     0x3D:    "Sound effect",
+    0x3E:    "Named Sound effect",
     0x46:    "New/invalid state",
     0x47:    "Thunderbolt",
     0x64:    "Open window",
@@ -75,14 +78,16 @@ names = {
     0x6B:    "Creative inventory action",
     0x6C:    "Enchant Item",
     0x82:    "Update sign",
-    0x83:    "Map data",
+    0x83:    "Item data",
     0x84:    "Update tile entity",
     0xC8:    "Increment statistic",
     0xC9:    "User list item",
     0xCA:    "Player abilities",
     0xCB:    "Tab-complete",
     0xCC:    "Locale and view distance",
+    0xCD:    "Client Statuses",
     0xFA:    "Plugin Message",
+    0xFD:    "Encryption Key Request",
     0xFE:    "Server list ping",
     0xFF:    "Disconnect"
 }
@@ -90,28 +95,21 @@ structs = {
     #Keep-alive
     0x00: ("int", "value"),
     #Login request
-    0x01:    { 
-        CLIENT_TO_SERVER: (
-            ("int", "protocol_version"),
-            ("string16", "username"),
-            ("string16", "not_used_1"),
-            ("int", "not_used_2"),
-            ("int", "not_used_3"),
-            ("byte", "not_used_4"),
-            ("byte", "not_used_5"),
-            ("ubyte", "not_used_6")),
-        SERVER_TO_CLIENT: (
-            ("int", "entity_id"),
-            ("string16", "not_used_1"),
-            ("string16", "level_type"),
-            ("int", "game_mode"),
-            ("int", "dimension"),
-            ("byte", "not_used_2"),
-            ("byte", "world_height"),
-            ("ubyte", "max_players"))},
+    0x01:    ( 
+        ("int", "entity_id"),
+        ("string16", "level_type"),
+        ("byte", "game_mode"),
+        ("byte", "dimension"),
+        ("byte", "difficulty"),
+        ("ubyte", "not used"),
+        ("ubyte", "max_players")),
     #Handshake
     0x02:    {
-        CLIENT_TO_SERVER: ("string16", "username_host"),
+        CLIENT_TO_SERVER: (
+            ("byte", "protocol"),
+            ("string16", "username"),
+            ("string16", "host"),
+            ("int", "port")),
         SERVER_TO_CLIENT: ("string16", "connection_hash")},
     #Chat message
     0x03: ("string16", "text"),
@@ -121,8 +119,7 @@ structs = {
     0x05: (
         ("int", "entity_id"),
         ("short", "slot"),
-        ("short", "item_id"),
-        ("short", "damage")),
+        ("slot", "Item")),
     #Spawn position
     0x06: (
         ("int", "x"),
@@ -208,7 +205,7 @@ structs = {
     0x13: (
         ("int", "entity_id"),
         ("byte", "action")),
-    #Named entity spawn
+    #Spawn Named entity
     0x14: (
         ("int", "entity_id"),
         ("string16", "player_name"),
@@ -217,7 +214,8 @@ structs = {
         ("int", "z"),
         ("byte", "rotation"),
         ("byte", "pitch"),
-        ("short", "current_item")),
+        ("short", "current_item"),
+        ("metadata", "metadata")),
     #Pickup spawn
     0x15: (
         ("int", "entity_id"),
@@ -252,6 +250,9 @@ structs = {
         ("byte", "yaw"),
         ("byte", "pitch"),
         ("byte", "head_yaw"),
+        ("short", "vz"),
+        ("short", "vx"),
+        ("short", "vy"),
         ("metadata", "metadata")),
     #Entity: painting
     0x19: (
@@ -275,15 +276,15 @@ structs = {
         ("short", "y_velocity"),
         ("short", "z_velocity")),
     #Destroy entity
-    0x1D: ("int", "entity_id"),
+    0x1D: ("byte", "entity_count"),
     #Entity
     0x1E: ("int", "entity_id"),
     #Entity relative move
     0x1F: (
         ("int", "entity_id"),
-        ("byte", "x_change"),
-        ("byte", "y_change"),
-        ("byte", "z_change")),
+        ("byte", "dx"),
+        ("byte", "dy"),
+        ("byte", "dz")),
     #Entity look
     0x20: (
         ("int", "entity_id"),
@@ -292,9 +293,9 @@ structs = {
     #Entity look and relative move
     0x21: (
         ("int", "entity_id"),
-        ("byte", "x_change"),
-        ("byte", "y_change"),
-        ("byte", "z_change"),
+        ("byte", "dx"),
+        ("byte", "dy"),
+        ("byte", "dz"),
         ("byte", "yaw"),
         ("byte", "pitch")),
     #Entity teleport
@@ -347,9 +348,8 @@ structs = {
         ("int", "z_chunk"),
         ("bool", "ground_up_contiguous"),
         ("short", "primary_bitmap"),
-        ("short", "secondary_bitmap"),
-        ("int", "data_size"),
-        ("int", "not_used_1")),
+        ("short", "add_bit_map"),
+        ("int", "data_size")),
     #Multi-block change
     0x34: (
         ("int", "x_chunk"),
@@ -361,22 +361,34 @@ structs = {
         ("int", "x"),
         ("ubyte", "y"),
         ("int", "z"),
-        ("byte", "id"),
+        ("short", "id"),
         ("byte", "metadata")),
     #Block action
     0x36: (
         ("int", "x"),
         ("short", "y"),
         ("int", "z"),
-        ("byte", "type_state"),
-        ("byte", "pitch_direction")),
+        ("byte", "byte1"),
+        ("byte", "byte2"),
+        ("short", "block id")),
+    # Block break animation
+    0x37: (
+        ("int", "eid"),
+        ("int", "x"),
+        ("int", "y"),
+        ("int", "z"),
+        ("byte", "destroy_stage")),
+    # Map Chunk Bulk
+    0x38: (
+        ("short", "chunk_count"),
+        ("int", "data_len")),
     #Explosion
     0x3C: (
         ("double", "x"),
         ("double", "y"),
         ("double", "z"),
         ("float", "radius"),
-        ("int", "data_size")),
+        ("int", "records")),
     #Sound effect
     0x3D: (
         ("int", "effect_id"),
@@ -384,6 +396,14 @@ structs = {
         ("ubyte", "y"),
         ("int", "z"),
         ("int", "extra")),
+    # Named Sound effect
+    0x3E: (
+        ("string16", "sound"),
+        ("int", "ex"),
+        ("int", "ey"),
+        ("int", "ez"),
+        ("float", "volume"),
+        ("byte", "pitch")),
     #New/invalid state
     0x46: (
         ("byte", "reason"),
@@ -448,7 +468,7 @@ structs = {
         ("string16", "line_2"),
         ("string16", "line_3"),
         ("string16", "line_4")),
-    #Map data
+    #Item data
     0x83: (
         ("short", "item_id"),
         ("short", "map_id"),
@@ -459,9 +479,7 @@ structs = {
         ("short", "y"),
         ("int", "z"),
         ("byte", "action"),
-        ("int", "custom_1"),
-        ("int", "custom_2"),
-        ("int", "custom_3")),
+        ("string8", "byte_array")),
     #Increment statistic
     0xC8: (
         ("int", "statistic_id"),
@@ -473,20 +491,26 @@ structs = {
         ("short", "ping")),
     #Player abilities
     0xCA: (
-        ("bool", "invulnerable"),
-        ("bool", "is_flying"),
-        ("bool", "can_fly"),
-        ("bool", "instabreak")),
+        ("byte", "flag"),
+        ("byte", "flying speed"),
+        ("byte", "walking speed")),
     #Tab-complete
     0xCB: ("string16", "text"),
     #Locale and view distance
     0xCC: (
         ("string16", "locale"),
         ("int", "view_distance")),
+    # client statuses
+    0xCD: ("byte", "payload"), 
     #Plugin message
     0xFA: (
         ("string16", "channel"),
         ("short", "data_size")),
+    # Encryption key request
+    0xFD: (
+        ("string16", "server_id"),
+        ("string8", "pubkey"), # guessing here
+        ("string8", "verify token")),
     #Server ping
     0xFE: (),
     #Disconnect

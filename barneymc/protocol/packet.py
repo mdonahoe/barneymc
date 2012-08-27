@@ -16,6 +16,8 @@ class Packet:
     def decode(self, bbuff):
         #Ident
         self.ident = unpack(bbuff, 'ubyte')
+        assert self.ident in names, "packet id = 0x%x" % self.ident
+        #print names[self.ident]
         
         #Payload
         for data_type, name in structs[self.ident][self.direction]:
