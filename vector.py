@@ -33,12 +33,15 @@ class Vector(object):
 
     def __repr__(self):
         return '<%s>' % ','.join(str(x) for x in (self.x,self.y,self.z))
-    
+
     def dot(self, other):
         return self.x * other.x + self.y * other.y + self.z * other.z
 
     def cross(self, other):
         raise NotImplementedError
+
+    def xyz(self):
+        return (self.x,self.y,self.z)
 
 if __name__ == '__main__':
     x = Vector(1,2,3)
